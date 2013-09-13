@@ -7,11 +7,11 @@ Registration = require '../model/dancer/registration'
 # Intended to be used inside a popup: will returned the created Registration object, or null.
 # Must be initianlized with an existing registration
 #
-# Associated with the `template/register.html` view, inside a dialog popup
+# Associated with the `template/register.html` view, inside a modal popup
 module.exports = class RegisterController
 
   # Controller dependencies
-  @$inject: ['registration', '$scope', 'dialog']
+  @$inject: ['registration', '$scope', '$modalInstance']
 
   # Currently edited registration
   registration: null
@@ -19,8 +19,8 @@ module.exports = class RegisterController
   # Controller scope
   scope: null
 
-  # Current dialog instance
-  _dialog: null
+  # Current modal instance
+  _modal: null
 
   # existing plannings
   _plannings: []
@@ -29,8 +29,8 @@ module.exports = class RegisterController
   #
   # @param registration [Registration] currently edited registration
   # @param scope [Object] Angular current scope
-  # @param dialog [Object] current dialog instance
-  constructor: (@registration, @scope, @_dialog) ->
+  # @param modal [Object] current modal instance
+  constructor: (@registration, @scope, @_modal) ->
     # creates a temporary registration for work, and initialized it if necessary
     @scope.handled = new Registration()
     throw new Error "Register controller needs to be passed a registration" unless @registration?
@@ -64,7 +64,7 @@ module.exports = class RegisterController
     # allow closure from now
     @scope.disabledClass = null
   
-  # Dialog closure method: will transfer to the dialog parent the created registration if confirmed
+  # modal closure method: will transfer to the modal parent the created registration if confirmed
   #
   # @param confirmed [Boolean] true if the creation is confirmed
   close: (confirmed) =>
@@ -75,7 +75,7 @@ module.exports = class RegisterController
       @registration.planningId = @scope.handled.planningId
       # replace array content without creating another array
       @registration.danceClassIds = @scope.handled.danceClassIds.concat()
-    @_dialog.close confirmed
+    @_modal.close confirmed
 
   # **private**
   # Invoked when the planning were retrieved.
@@ -89,7 +89,7 @@ module.exports = class RegisterController
     @_plannings = plannings
     @scope.$apply =>
       # extracts existing seasons and select first
-      @scope.seasons = _.pluck @_plannings, 'season'
+      @scope.seasons = _.pluck(@_plannings, 'season').sort().reverse()
       if @registration.planningId?
         @onUpdateSeason _.findWhere(@_plannings, id: @registration.planningId)?.season
       else

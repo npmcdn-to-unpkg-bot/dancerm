@@ -88,8 +88,17 @@ app.service 'import', ImportService
 app.close = (callback) ->
   $injector = angular.element('body').injector()
   # display waigin message
-  $injector.get('$rootScope').$apply =>
-    $injector.get('$dialog').messageBox(i18n.ttl.dump, i18n.msg.dumping, []).open()
+  rootScope = $injector.get('$rootScope')
+  rootScope.$apply =>
+    modalScope = rootScope.$new()
+    modalScope.title = i18n.ttl.dump 
+    modalScope.message = i18n.msg.dumping
+    $injector.get('$modal').open(
+      backdrop: true
+      keyboard: true
+      templateUrl: "messagebox.html"
+      scope: modalScope
+    )
   # export data
   $injector.get('export').dump localStorage.getItem('dumpPath'), callback
 

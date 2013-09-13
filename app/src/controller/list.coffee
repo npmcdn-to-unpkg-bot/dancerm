@@ -30,6 +30,7 @@ module.exports = class ListController
           table = element          
           previous = table.prev();
           table.detach()
+          
     $('.column-and-main .column').on 'webkitTransitionEnd', (e) ->
       if table? and $(e.target).hasClass 'column'
         table.insertAfter previous 

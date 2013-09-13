@@ -29,7 +29,7 @@ app.directive 'registration', ->
 class RegistrationDirective
                 
   # Controller dependencies
-  @$inject: ['$scope', '$element', '$dialog']
+  @$inject: ['$scope', '$element', '$modal']
   
   # Controller scope, injected within constructor
   scope: null
@@ -37,15 +37,15 @@ class RegistrationDirective
   # JQuery enriched element for directive root
   $el: null
 
-  # Angular's dialog service
-  dialog: null
+  # Angular's modal service
+  modal: null
   
   # Controller constructor: bind methods and attributes to current scope
   #
   # @param scope [Object] directive scope
   # @param element [DOM] directive root element
-  # @param dialog [Object] Angular's dialog service
-  constructor: (@scope, element, @dialog) ->
+  # @param modal [Object] Angular's modal service
+  constructor: (@scope, element, @modal) ->
     @$el = $(element)
     # class use to highlight the balance state
     @scope.i18n = i18n
@@ -81,15 +81,22 @@ class RegistrationDirective
   #
   # @param removed [Payment] the removed payment model
   onRemovePayment: (removed) =>
-    @dialog.messageBox(i18n.ttl.confirm, 
-      _.sprintf(i18n.msg.removePayment, 
-        i18n.paymentTypes[removed.type], 
-        removed.value, 
-        removed.receipt.format i18n.formats.receipt), 
-      [
-        {result: false, label: i18n.btn.no}
-        {result: true, label: i18n.btn.yes, cssClass: 'btn-warning'}
-      ]).open().then (confirm) =>
+    modalScope = @scope.$new()
+    modalScope.title = i18n.ttl.confirm 
+    modalScope.message = _.sprintf i18n.msg.removePayment, 
+      i18n.paymentTypes[removed.type], 
+      removed.value, 
+      removed.receipt.format i18n.formats.receipt
+    modalScope.buttons = [
+      {result: false, label: i18n.btn.no}
+      {result: true, label: i18n.btn.yes, cssClass: 'btn-warning'}
+    ]
+    @modal.open(
+        backdrop: true
+        keyboard: true
+        templateUrl: "messagebox.html"
+        scope: modalScope
+      ).result.then (confirm) =>
         return unless confirm
         @scope.src.payments.splice @scope.src.payments.indexOf(removed), 1
         @onPaymentChanged()

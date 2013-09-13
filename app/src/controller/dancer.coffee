@@ -18,13 +18,13 @@ paths = ['title', 'firstname', 'lastname',
 module.exports = class DancerController
             
   # Controller dependencies
-  @$inject: ['$scope', '$stateParams', '$state', '$dialog', '$q']
+  @$inject: ['$scope', '$stateParams', '$state', '$modal', '$q']
 
   # Controller scope, injected within constructor
   scope: null
       
-  # Link to Angular dialog service
-  dialog: null
+  # Link to Angular modal service
+  modal: null
 
   # Link to Angular deferred implementation
   q: null
@@ -40,9 +40,9 @@ module.exports = class DancerController
   # @param scope [Object] Angular current scope
   # @param stateParams [Object] invokation route parameters
   # @param state [Object] Angular state service
-  # @param dialog [Object] Angular dialog service
+  # @param modal [Object] Angular modal service
   # @param q [Object] Angular deferred implementation
-  constructor: (@scope, stateParams, @state, @dialog, @q) -> 
+  constructor: (@scope, stateParams, @state, @modal, @q) -> 
     @_reqInProgress = false
     @scope.isNew = false
     @scope.hasChanged = false
@@ -66,11 +66,19 @@ module.exports = class DancerController
       # stop state change until user choose what to do with pending changes
       event.preventDefault()
       # confirm if dancer changed
-      @dialog.messageBox(i18n.ttl.confirm, i18n.msg.confirmGoBack, [
-          {label: i18n.btn.no, cssClass: 'btn-warning'}
-          {label: i18n.btn.yes, result: true}
-        ]
-      ).open().then (confirmed) =>
+      modalScope = @scope.$new()
+      modalScope.title = i18n.ttl.confirm 
+      modalScope.message = i18n.msg.confirmGoBack
+      modalScope.buttons = [
+        {label: i18n.btn.no, cssClass: 'btn-warning'}
+        {label: i18n.btn.yes, result: true}
+      ]
+      @modal.open(
+        backdrop: true
+        keyboard: true
+        templateUrl: "messagebox.html"
+        scope: modalScope
+      ).result.then (confirmed) =>
         return unless confirmed
         # if confirmed, effectively go on desired state
         @scope.hasChanged = false
@@ -94,13 +102,19 @@ module.exports = class DancerController
   # restore previous values
   onCancel: =>
     return unless @scope.hasChanged
-    @dialog.messageBox(i18n.ttl.confirm, 
-      _.sprintf(i18n.msg.cancelEdition, @scope.dancer.firstname, @scope.dancer.lastname), 
-      [
-        {label: i18n.btn.no, cssClass: 'btn-warning'}
-        {label: i18n.btn.yes, result: true}
-      ]
-    ).open().then (confirmed) =>
+    modalScope = @scope.$new()
+    modalScope.title = i18n.ttl.confirm 
+    modalScope.message = _.sprintf i18n.msg.cancelEdition, @scope.dancer.firstname, @scope.dancer.lastname
+    modalScope.buttons = [
+      {label: i18n.btn.no, cssClass: 'btn-warning'}
+      {label: i18n.btn.yes, result: true}
+    ]
+    @modal.open(
+      backdrop: true
+      keyboard: true
+      templateUrl: "messagebox.html"
+      scope: modalScope
+    ).result.then (confirmed) =>
       return unless confirmed
       @scope.dancer = new Dancer @scope.displayed.toJSON()
 
@@ -135,7 +149,7 @@ module.exports = class DancerController
   onChooseDancer: (dancer) =>
     # removes typeahead
     @scope.isNew = false
-    $('.typeahead.dropdown-menu').remove()
+    #TODO $('.typeahead.dropdown-menu').remove()
     # replace current dancer
     @_displayDancer dancer
 
@@ -162,38 +176,45 @@ module.exports = class DancerController
     @scope.dancer?.title = selected
 
   # Add a new registration for the current season to the edited dancer, or edit an existing one
-  # Displays the registration dialog
+  # Displays the registration modal
   #
   # @param registration [Registration] the edited registration, null to create a new one 
   onRegister: (registration = null) =>
     handled = new Registration()
-    # display dialog to choose registration season and dance classes
-    @dialog.dialog(
+    # display modal to choose registration season and dance classes
+    @modal.open(
+      backdrop: true
       keyboard: false
-      backdropClick: false
-      dialogFade: true
-      backdropFade: true
+      templateUrl: "register.html"
       controller: RegisterController
-      templateUrl: 'register.html'
       resolve: registration: -> registration or handled
-    ).open().then (confirmed) =>
+    ).result.then (confirmed) =>
       return if !confirmed or registration?
       # add the created registration to current dancer at the first position
       @scope.dancer.registrations.splice 0, 0, handled
 
   # Invoked when registration needs to be removed.
-  # First display a confirmation dialog, and then removes it
+  # First display a confirmation modal, and then removes it
   #
   # @param removed [Registration] the removed registration
   onRemoveRegistration: (removed) =>
     Planning.find removed.planningId, (err, planning) =>
       throw err if err?
       @scope.$apply =>
-        @dialog.messageBox(i18n.ttl.confirm, _.sprintf(i18n.msg.removeRegistration, planning.season), [
+        modalScope = @scope.$new()
+        modalScope.title = i18n.ttl.confirm 
+        modalScope.message = _.sprintf i18n.msg.removeRegistration, planning.season
+        modalScope.buttons = [
           {result: false, label: i18n.btn.no}
           {result: true, label: i18n.btn.yes, cssClass: 'btn-warning'}
-        ]).open().then (confirm) =>
-          return unless confirm
+        ]
+        @modal.open(
+          backdrop: true
+          keyboard: true
+          templateUrl: "messagebox.html"
+          scope: modalScope
+        ).result.then (confirmed) =>
+          return unless confirmed
           @scope.dancer.registrations.splice @scope.dancer.registrations.indexOf(removed), 1
 
   # Invoked when the list of known-by meanings has changed.

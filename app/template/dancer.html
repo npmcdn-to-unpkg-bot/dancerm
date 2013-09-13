@@ -21,15 +21,17 @@
         type="text" 
         data-ng-if="isNew" 
         data-ng-model="dancer.firstname"
-        data-typeahead="dancer as dancer.firstname+' '+dancer.lastname for dancer in findByAttr('firstname', $viewValue) | filter:$viewValue | limitTo:20" 
+        data-typeahead="dancer as dancer.firstname+' '+dancer.lastname for dancer in findByAttr('firstname', $viewValue)" 
         data-typeahead-min-length="3" 
+        data-typeahead-editable="false"
         data-typeahead-on-select="onChooseDancer($model)"/><input type="text" data-ng-if="!isNew" data-ng-model="dancer.firstname"/></span>
       <span class="span6"><label>{{'lbl.lastname'|i18n:{sep:true} }}</label><input 
         type="text" 
         data-ng-if="isNew" 
         data-ng-model="dancer.lastname"
-        data-typeahead="dancer as dancer.firstname+' '+dancer.lastname for dancer in findByAttr('lastname', $viewValue) | filter:$viewValue | limitTo:20" 
+        data-typeahead="dancer as dancer.firstname+' '+dancer.lastname for dancer in findByAttr('lastname', $viewValue)" 
         data-typeahead-min-length="3" 
+        data-typeahead-editable="false"
         data-typeahead-on-select="onChooseDancer($model)"/><input type="text" data-ng-if="!isNew" data-ng-model="dancer.lastname"/></span>
     </div>
     <div class="row-fluid">
